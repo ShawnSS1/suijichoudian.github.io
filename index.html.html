@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>随机点名小程序</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义主题 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3B82F6',
+            secondary: '#10B981',
+            accent: '#F59E0B',
+            danger: '#EF4444',
+            dark: '#1F2937',
+          },
+          fontFamily: {
+            sans: ['system-ui', 'sans-serif'],
+            serif: ['Georgia', 'serif'],
+            mono: ['Courier New', 'monospace'],
+            cursive: ['Brush Script MT', 'cursive']
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .animate-bounce-slow {
+        animation: bounce 2s infinite;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .card-hover {
+        @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+      }
+      .bg-blur {
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      
+      /* 页面切换动画 */
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+        animation: fadeIn 0.3s ease-in;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      /* 背景图案 */
+      .bg-pattern-1 {
+        background-color: #f8fafc;
+        background-image: radial-gradient(#e2e8f0 0.5px, transparent 0.5px), radial-gradient(#e2e8f0 0.5px, #f8fafc 0.5px);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+      }
+      .bg-pattern-2 {
+        background-color: #f0fdf4;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2310b981' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+      .bg-pattern-3 {
+        background: #fef3c7;
+        background-image: linear-gradient(0deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%, transparent);
+        background-size: 50px 50px;
+      }
+      .bg-pattern-4 {
+        background-color: #eff6ff;
+        background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.05'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+      .bg-pattern-5 {
+        background-color: #ffffff;
+        background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23e5e7eb' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+      }
+    }
+  </style>
+</head>
+<body class="bg-pattern-1 min-h-screen font-sans text-dark transition-all duration-500">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- 主页面 -->
+    <div id="mainPage" class="page active">
+      <!-- 标题区域 -->
+      <header id="mainTitleContainer" class="text-center mb-8 relative">
+        <h1 id="mainTitle" class="text-[clamp(2rem,5vw,3rem)] font-bold text-primary text-shadow">
+          随机点名
+        </h1>
+        <!-- 副标题 -->
+        <h2 id="subTitle" class="text-[clamp(1.2rem,3vw,2rem)] font-medium text-primary/80 text-shadow mt-2">
+          公平公正 · 随机选择
+        </h2>
+        
+        <!-- 设置按钮 - 确保右上角显示 -->
+        <button id="goToSettingsBtn" class="absolute top-0 right-0 text-gray-700 hover:text-primary transition-colors p-2 z-50">
+          <i class="fa fa-cog text-2xl"></i>
+        </button>
+      </header>
+      
+      <!-- 主要抽奖区域 -->
+      <div class="mb-6">
+        <!-- 结果展示区 -->
+        <div id="resultArea" class="min-h-[250px] flex items-center justify-center mb-12 overflow-hidden">
+          <div id="randomTextContainer" class="text-center p-6">
+            <p id="defaultResultText" class="text-gray-400 text-lg">点击开始按钮进行随机点名</p>
+            <p id="selectedName" class="text-[clamp(2rem,8vw,4rem)] font-bold text-primary hidden"></p>
+          </div>
+        </div>
+        
+        <!-- 控制按钮 -->
+        <div id="buttonsContainer" class="flex justify-center gap-4 mt-8">
+          <button 
+            id="startBtn" 
+            class="bg-accent hover:bg-accent/90 text-white px-6 py-3 rounded-lg transition-all flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled
+          >
+            <i class="fa fa-play mr-2"></i><span>开始</span>
+          </button>
+          <button 
+            id="stopBtn" 
+            class="bg-danger hover:bg-danger/90 text-white px-6 py-3 rounded-lg transition-all flex items-center hidden"
+          >
+            <i class="fa fa-stop mr-2"></i><span>停止</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- 页脚 -->
+      <footer class="mt-10 text-center text-gray-500 text-sm">
+        <p id="footerText">随机点名小程序 &copy; 2023</p>
+      </footer>
+    </div>
+    
+    <!-- 设置页面 -->
+    <div id="settingsPage" class="page">
+      <!-- 设置页面标题 -->
+      <header class="text-center mb-8 relative">
+        <h1 class="text-[clamp(1.5rem,4vw,2.5rem)] font-bold text-primary text-shadow">
+          <i class="fa fa-cog mr-2"></i>设置
+        </h1>
+        
+        <!-- 返回按钮 -->
+        <button id="goToMainBtn" class="absolute top-0 left-0 text-gray-500 hover:text-primary transition-colors p-2">
+          <i class="fa fa-arrow-left text-xl"></i>
+        </button>
+      </header>
+      
+      <!-- 文字自定义设置 -->
+      <div class="bg-white/80 bg-blur rounded-xl shadow-md p-6 mb-6 card-hover">
+        <h2 class="text-xl font-semibold text-dark mb-4">
+          <i class="fa fa-font mr-2 text-primary"></i>文字自定义
+        </h2>
+        <div class="space-y-6">
+          <!-- 主标题设置 -->
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">主标题设置</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">主标题文字</label>
+                <input type="text" id="editMainTitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                <p class="text-xs text-gray-500 mt-1">留空则不显示</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">主标题颜色</label>
+                <div class="flex gap-2">
+                  <input type="color" id="mainTitleColor" value="#3B82F6" class="w-10 h-10 border-0 rounded">
+                  <input type="text" id="mainTitleColorHex" value="#3B82F6" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  主标题字号 <span id="mainTitleSizeValue" class="text-primary">3rem</span>
+                </label>
+                <input type="range" id="mainTitleSize" min="1" max="6" step="0.1" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 1rem - 6rem</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">主标题字体</label>
+                <select id="mainTitleFont" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                  <option value="font-sans">无衬线字体</option>
+                  <option value="font-serif">衬线字体</option>
+                  <option value="font-mono">等宽字体</option>
+                  <option value="font-cursive">手写体</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 副标题设置 -->
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">副标题设置</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">副标题文字</label>
+                <input type="text" id="editSubTitle" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                <p class="text-xs text-gray-500 mt-1">留空则不显示</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">副标题颜色</label>
+                <div class="flex gap-2">
+                  <input type="color" id="subTitleColor" value="#3B82F6" class="w-10 h-10 border-0 rounded">
+                  <input type="text" id="subTitleColorHex" value="#3B82F6" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  副标题字号 <span id="subTitleSizeValue" class="text-primary">2rem</span>
+                </label>
+                <input type="range" id="subTitleSize" min="0.8" max="4" step="0.1" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0.8rem - 4rem</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">副标题字体</label>
+                <select id="subTitleFont" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                  <option value="font-sans">无衬线字体</option>
+                  <option value="font-serif">衬线字体</option>
+                  <option value="font-mono">等宽字体</option>
+                  <option value="font-cursive">手写体</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 随机结果文字设置 -->
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">随机结果文字设置</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">默认提示文字</label>
+                <input type="text" id="editDefaultResultText" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                <p class="text-xs text-gray-500 mt-1">留空则不显示</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">随机结果文字颜色</label>
+                <div class="flex gap-2">
+                  <input type="color" id="resultTextColor" value="#3B82F6" class="w-10 h-10 border-0 rounded">
+                  <input type="text" id="resultTextColorHex" value="#3B82F6" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  随机结果文字字号 <span id="resultTextSizeValue" class="text-primary">4rem</span>
+                </label>
+                <input type="range" id="resultTextSize" min="2" max="8" step="0.1" value="4" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 2rem - 8rem</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 按钮文字设置 -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">开始按钮文字</label>
+              <input type="text" id="editStartBtnText" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+              <p class="text-xs text-gray-500 mt-1">留空则只显示图标</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">停止按钮文字</label>
+              <input type="text" id="editStopBtnText" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+              <p class="text-xs text-gray-500 mt-1">留空则只显示图标</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">页脚文字</label>
+              <input type="text" id="editFooterText" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+              <p class="text-xs text-gray-500 mt-1">留空则不显示</p>
+            </div>
+          </div>
+          
+          <button id="saveTextSettings" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-all">
+            <i class="fa fa-save mr-1"></i> 保存文字设置
+          </button>
+        </div>
+      </div>
+      
+      <!-- 位置与按钮样式调整设置 -->
+      <div class="bg-white/80 bg-blur rounded-xl shadow-md p-6 mb-6 card-hover">
+        <h2 class="text-xl font-semibold text-dark mb-4">
+          <i class="fa fa-arrows mr-2 text-primary"></i>位置与按钮样式调整
+        </h2>
+        <div class="space-y-6">
+          <!-- 主标题位置 -->
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">主标题位置</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  上边距 <span id="mainTitleMarginTopValue" class="text-primary">2rem</span>
+                </label>
+                <input type="range" id="mainTitleMarginTop" min="0" max="10" step="0.1" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0rem - 10rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  下边距 <span id="mainTitleMarginBottomValue" class="text-primary">2rem</span>
+                </label>
+                <input type="range" id="mainTitleMarginBottom" min="0" max="10" step="0.1" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0rem - 10rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">对齐方式</label>
+                <div class="flex gap-2">
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1" data-target="mainTitleContainer" data-align="text-left">
+                    <i class="fa fa-align-left"></i> 左对齐
+                  </button>
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1 bg-primary/10 border-primary" data-target="mainTitleContainer" data-align="text-center">
+                    <i class="fa fa-align-center"></i> 居中
+                  </button>
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1" data-target="mainTitleContainer" data-align="text-right">
+                    <i class="fa fa-align-right"></i> 右对齐
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 副标题位置设置 -->
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">副标题位置</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  与主标题间距 <span id="subTitleMarginTopValue" class="text-primary">0.5rem</span>
+                </label>
+                <input type="range" id="subTitleMarginTop" min="0" max="3" step="0.1" value="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0rem - 3rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  下边距 <span id="subTitleMarginBottomValue" class="text-primary">1rem</span>
+                </label>
+                <input type="range" id="subTitleMarginBottom" min="0" max="5" step="0.1" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0rem - 5rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">对齐方式</label>
+                <div class="flex gap-2">
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1" data-target="subTitle" data-align="text-left">
+                    <i class="fa fa-align-left"></i> 左对齐
+                  </button>
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1 bg-primary/10 border-primary" data-target="subTitle" data-align="text-center">
+                    <i class="fa fa-align-center"></i> 居中
+                  </button>
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1" data-target="subTitle" data-align="text-right">
+                    <i class="fa fa-align-right"></i> 右对齐
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  水平偏移 <span id="subTitleHorizontalOffsetValue" class="text-primary">0rem</span>
+                </label>
+                <input type="range" id="subTitleHorizontalOffset" min="-5" max="5" step="0.1" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: -5rem（左移） - 5rem（右移）</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 随机文字位置 -->
+          <div class="border-b border-gray-100 pb-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">随机文字位置</h3>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  上边距 <span id="randomTextMarginTopValue" class="text-primary">30rem</span>
+                </label>
+                <input type="range" id="randomTextMarginTop" min="0" max="50" step="0.1" value="30" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0rem - 50rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  下边距 <span id="randomTextMarginBottomValue" class="text-primary">3rem</span>
+                </label>
+                <input type="range" id="randomTextMarginBottom" min="0" max="15" step="0.1" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0rem - 15rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">对齐方式</label>
+                <div class="flex gap-2">
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1" data-target="randomTextContainer" data-align="text-left">
+                    <i class="fa fa-align-left"></i> 左对齐
+                  </button>
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1 bg-primary/10 border-primary" data-target="randomTextContainer" data-align="text-center">
+                    <i class="fa fa-align-center"></i> 居中
+                  </button>
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1" data-target="randomTextContainer" data-align="text-right">
+                    <i class="fa fa-align-right"></i> 右对齐
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 按钮设置 -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-3">按钮样式与位置</h3>
+            
+            <!-- 按钮位置 -->
+            <div class="border-b border-gray-100 pb-4">
+              <h4 class="text-md font-medium text-gray-700 mb-2">按钮位置</h4>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  上边距 <span id="buttonsMarginTopValue" class="text-primary">2rem</span>
+                </label>
+                <input type="range" id="buttonsMarginTop" min="0" max="15" step="0.1" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0rem - 15rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  下边距 <span id="buttonsMarginBottomValue" class="text-primary">0rem</span>
+                </label>
+                <input type="range" id="buttonsMarginBottom" min="0" max="15" step="0.1" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0rem - 15rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">对齐方式</label>
+                <div class="flex gap-2">
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1" data-target="buttonsContainer" data-align="justify-start">
+                    <i class="fa fa-align-left"></i> 左对齐
+                  </button>
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1 bg-primary/10 border-primary" data-target="buttonsContainer" data-align="justify-center">
+                    <i class="fa fa-align-center"></i> 居中
+                  </button>
+                  <button class="position-align-btn px-4 py-2 border border-gray-300 rounded flex-1" data-target="buttonsContainer" data-align="justify-end">
+                    <i class="fa fa-align-right"></i> 右对齐
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 按钮大小 -->
+            <div class="border-b border-gray-100 pb-4">
+              <h4 class="text-md font-medium text-gray-700 mb-2">按钮大小</h4>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  按钮高度 <span id="buttonHeightValue" class="text-primary">3rem</span>
+                </label>
+                <input type="range" id="buttonHeight" min="2" max="6" step="0.1" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 2rem - 6rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  按钮内边距 <span id="buttonPaddingValue" class="text-primary">1.5rem</span>
+                </label>
+                <input type="range" id="buttonPadding" min="0.5" max="4" step="0.1" value="1.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0.5rem - 4rem</p>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  按钮圆角 <span id="buttonRadiusValue" class="text-primary">0.5rem</span>
+                </label>
+                <input type="range" id="buttonRadius" min="0" max="2" step="0.1" value="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <p class="text-xs text-gray-500 mt-1">范围: 0rem（直角） - 2rem（圆形）</p>
+              </div>
+            </div>
+            
+            <!-- 按钮颜色 -->
+            <div>
+              <h4 class="text-md font-medium text-gray-700 mb-2">按钮颜色</h4>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">开始按钮背景色</label>
+                <div class="flex gap-2">
+                  <input type="color" id="startBtnBgColor" value="#F59E0B" class="w-10 h-10 border-0 rounded">
+                  <input type="text" id="startBtnBgColorHex" value="#F59E0B" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">开始按钮文字色</label>
+                <div class="flex gap-2">
+                  <input type="color" id="startBtnTextColor" value="#FFFFFF" class="w-10 h-10 border-0 rounded">
+                  <input type="text" id="startBtnTextColorHex" value="#FFFFFF" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">停止按钮背景色</label>
+                <div class="flex gap-2">
+                  <input type="color" id="stopBtnBgColor" value="#EF4444" class="w-10 h-10 border-0 rounded">
+                  <input type="text" id="stopBtnBgColorHex" value="#EF4444" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">停止按钮文字色</label>
+                <div class="flex gap-2">
+                  <input type="color" id="stopBtnTextColor" value="#FFFFFF" class="w-10 h-10 border-0 rounded">
+                  <input type="text" id="stopBtnTextColorHex" value="#FFFFFF" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <button id="savePositionSettings" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-all">
+            <i class="fa fa-save mr-1"></i> 保存位置与按钮设置
+          </button>
+        </div>
+      </div>
+      
+      <!-- 名单管理设置 -->
+      <div class="bg-white/80 bg-blur rounded-xl shadow-md p-6 mb-6 card-hover">
+        <h2 class="text-xl font-semibold text-dark mb-4">
+          <i class="fa fa-list-ul mr-2 text-primary"></i>名单管理
+        </h2>
+        <span id="nameCount" class="bg-primary/10 text-primary px-2 py-1 rounded-full text-sm mb-4 inline-block">0人</span>
+        
+        <!-- 添加名字表单 -->
+        <div class="flex mb-4">
+          <input 
+            type="text" 
+            id="newName" 
+            placeholder="输入姓名..." 
+            class="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+          >
+          <button 
+            id="addName" 
+            class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-r-lg transition-all"
+          >
+            <i class="fa fa-plus"></i>
+          </button>
+        </div>
+        
+        <!-- 名单列表 -->
+        <div class="border-t border-gray-100 pt-3">
+          <h3 class="text-sm font-medium text-gray-500 mb-2">已添加名单:</h3>
+          <div id="nameList" class="max-h-[200px] overflow-y-auto pr-1 space-y-2">
+            <div class="text-gray-400 text-center py-6 text-sm">
+              <i class="fa fa-info-circle mr-1"></i> 暂无名单，请添加
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 背景设置 -->
+      <div class="bg-white/80 bg-blur rounded-xl shadow-md p-6 mb-6 card-hover">
+        <h2 class="text-xl font-semibold text-dark mb-4">
+          <i class="fa fa-image mr-2 text-secondary"></i>背景设置
+        </h2>
+        <div class="flex flex-wrap justify-between items-center gap-4">
+          <div class="bg-gray-50/80 rounded-lg p-3 w-full">
+            <span class="text-sm text-gray-500 mr-2">预设背景:</span>
+            <div class="flex mt-2 gap-2">
+              <button class="w-8 h-8 rounded-full bg-pattern-1 border-2 border-transparent hover:border-primary transition-all" data-bg="bg-pattern-1"></button>
+              <button class="w-8 h-8 rounded-full bg-pattern-2 border-2 border-transparent hover:border-primary transition-all" data-bg="bg-pattern-2"></button>
+              <button class="w-8 h-8 rounded-full bg-pattern-3 border-2 border-transparent hover:border-primary transition-all" data-bg="bg-pattern-3"></button>
+              <button class="w-8 h-8 rounded-full bg-pattern-4 border-2 border-transparent hover:border-primary transition-all" data-bg="bg-pattern-4"></button>
+              <button class="w-8 h-8 rounded-full bg-pattern-5 border-2 border-transparent hover:border-primary transition-all" data-bg="bg-pattern-5"></button>
+            </div>
+          </div>
+          
+          <div class="bg-gray-50/80 rounded-lg p-3 w-full">
+            <span class="text-sm text-gray-500 mr-2">自定义背景:</span>
+            <div class="flex mt-2 items-center">
+              <label class="relative cursor-pointer">
+                <input type="file" id="bgUpload" accept="image/*" class="hidden">
+                <span class="bg-primary hover:bg-primary/90 text-white px-3 py-1 rounded-lg text-sm transition-all flex items-center">
+                  <i class="fa fa-upload mr-1"></i> 上传图片
+                </span>
+              </label>
+              <button id="removeCustomBg" class="ml-2 text-gray-500 hover:text-danger transition-colors p-1 hidden">
+                <i class="fa fa-times-circle"></i> 移除
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 历史记录 -->
+      <div class="bg-white/80 bg-blur rounded-xl shadow-md p-6 mb-6 card-hover">
+        <h2 class="text-xl font-semibold text-dark mb-4">
+          <i class="fa fa-history mr-2 text-gray-500"></i>历史记录
+        </h2>
+        <div class="flex justify-between items-center mb-4">
+          <div id="historyList" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div class="text-gray-400 text-center py-4 text-sm col-span-full">
+              暂无记录
+            </div>
+          </div>
+        </div>
+        <button id="clearHistoryBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-all text-sm">
+          <i class="fa fa-trash mr-1"></i> 清空历史记录
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 数据存储
+    let nameList = [];
+    let historyList = [];
+    let isRolling = false;
+    let rollInterval;
+    let currentBgType = 'pattern'; // 'pattern' 或 'custom'
+    let currentBgValue = 'bg-pattern-1'; // 图案类名或图片URL
+    const DEFAULT_BG = 'bg-pattern-1';
+    
+    // 文字内容默认值
+    const defaultTextContent = {
+      mainTitle: '随机点名',
+      mainTitleColor: '#3B82F6',
+      mainTitleSize: 3, // rem
+      mainTitleFont: 'font-sans',
+      
+      subTitle: '公平公正 · 随机选择',
+      subTitleColor: '#3B82F6',
+      subTitleSize: 2, // rem
+      subTitleFont: 'font-sans',
+      
+      defaultResultText: '点击开始按钮进行随机点名',
+      resultTextColor: '#3B82F6',
+      resultTextSize: 4, // rem
+      startBtnText: '开始',
+      stopBtnText: '停止',
+      footerText: '随机点名小程序 &copy; 2023'
+    };
+    
+    // 位置与按钮设置默认值
+    const defaultPositionSettings = {
+      // 主标题位置
+      mainTitleMarginTop: 2,    // rem
+      mainTitleMarginBottom: 2, // rem
+      mainTitleAlign: 'text-center',
+      
+      // 副标题位置
+      subTitleMarginTop: 0.5,   // rem (与主标题的间距)
+      subTitleMarginBottom: 1,  // rem
+      subTitleAlign: 'text-center',
+      subTitleHorizontalOffset: 0, // 水平偏移量
+      
+      // 随机文字位置 - 设置为30rem
+      randomTextMarginTop: 30,    // rem
+      randomTextMarginBottom: 3, // rem
+      randomTextAlign: 'text-center',
+      
+      // 按钮设置
+      buttonsMarginTop: 2,    // rem
+      buttonsMarginBottom: 0, // rem
+      buttonsAlign: 'justify-center',
+      
+      // 按钮大小
+      buttonHeight: 3,        // rem
+      buttonPadding: 1.5,     // rem
+      buttonRadius: 0.5,      // rem
+      
+      // 按钮颜色
+      startBtnBgColor: '#F59E0B',
+      startBtnTextColor: '#FFFFFF',
+      stopBtnBgColor: '#EF4444',
+      stopBtnTextColor: '#FFFFFF'
+    };
+    
+    // 当前文字内容
+    let textContent = { ...defaultTextContent };
+    // 当前位置设置
+    let positionSettings = { ...defaultPositionSettings };
+    
+    // DOM元素
+    const mainPage = document.getElementById('mainPage');
+    const settingsPage = document.getElementById('settingsPage');
+    const goToSettingsBtn = document.getElementById('goToSettingsBtn');
+    const goToMainBtn = document.getElementById('goToMainBtn');
+    
+    // 容器元素
+    const mainTitleContainer = document.getElementById('mainTitleContainer');
+    const randomTextContainer = document.getElementById('randomTextContainer');
+    const buttonsContainer = document.getElementById('buttonsContainer');
+    
+    // 主页面文字元素
+    const mainTitleEl = document.getElementById('mainTitle');
+    const subTitleEl = document.getElementById('subTitle');
+    const defaultResultTextEl = document.getElementById('defaultResultText');
+    const selectedNameEl = document.getElementById('selectedName');
+    const startBtnEl = document.querySelector('#startBtn span');
+    const stopBtnEl = document.querySelector('#stopBtn span');
+    const footerContainer = document.querySelector('footer');
+    const footerTextEl = document.getElementById('footerText');
+    
+    // 按钮元素
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    
+    // 文字编辑元素
+    const editMainTitleEl = document.getElementById('editMainTitle');
+    const mainTitleColorEl = document.getElementById('mainTitleColor');
+    const mainTitleColorHexEl = document.getElementById('mainTitleColorHex');
+    const mainTitleSizeEl = document.getElementById('mainTitleSize');
+    const mainTitleSizeValueEl = document.getElementById('mainTitleSizeValue');
+    const mainTitleFontEl = document.getElementById('mainTitleFont');
+    
+    // 副标题编辑元素
+    const editSubTitleEl = document.getElementById('editSubTitle');
+    const subTitleColorEl = document.getElementById('subTitleColor');
+    const subTitleColorHexEl = document.getElementById('subTitleColorHex');
+    const subTitleSizeEl = document.getElementById('subTitleSize');
+    const subTitleSizeValueEl = document.getElementById('subTitleSizeValue');
+    const subTitleFontEl = document.getElementById('subTitleFont');
+    
+    // 随机结果文字编辑元素
+    const editDefaultResultTextEl = document.getElementById('editDefaultResultText');
+    const resultTextColorEl = document.getElementById('resultTextColor');
+    const resultTextColorHexEl = document.getElementById('resultTextColorHex');
+    const resultTextSizeEl = document.getElementById('resultTextSize');
+    const resultTextSizeValueEl = document.getElementById('resultTextSizeValue');
+    
+    // 位置调整元素
+    const mainTitleMarginTopEl = document.getElementById('mainTitleMarginTop');
+    const mainTitleMarginTopValueEl = document.getElementById('mainTitleMarginTopValue');
+    const mainTitleMarginBottomEl = document.getElementById('mainTitleMarginBottom');
+    const mainTitleMarginBottomValueEl = document.getElementById('mainTitleMarginBottomValue');
+    
+    // 副标题位置元素
+    const subTitleMarginTopEl = document.getElementById('subTitleMarginTop');
+    const subTitleMarginTopValueEl = document.getElementById('subTitleMarginTopValue');
+    const subTitleMarginBottomEl = document.getElementById('subTitleMarginBottom');
+    const subTitleMarginBottomValueEl = document.getElementById('subTitleMarginBottomValue');
+    const subTitleHorizontalOffsetEl = document.getElementById('subTitleHorizontalOffset');
+    const subTitleHorizontalOffsetValueEl = document.getElementById('subTitleHorizontalOffsetValue');
+    
+    const randomTextMarginTopEl = document.getElementById('randomTextMarginTop');
+    const randomTextMarginTopValueEl = document.getElementById('randomTextMarginTopValue');
+    const randomTextMarginBottomEl = document.getElementById('randomTextMarginBottom');
+    const randomTextMarginBottomValueEl = document.getElementById('randomTextMarginBottomValue');
+    
+    // 按钮设置元素
+    const buttonsMarginTopEl = document.getElementById('buttonsMarginTop');
+    const buttonsMarginTopValueEl = document.getElementById('buttonsMarginTopValue');
+    const buttonsMarginBottomEl = document.getElementById('buttonsMarginBottom');
+    const buttonsMarginBottomValueEl = document.getElementById('buttonsMarginBottomValue');
+    
+    // 按钮大小元素
+    const buttonHeightEl = document.getElementById('buttonHeight');
+    const buttonHeightValueEl = document.getElementById('buttonHeightValue');
+    const buttonPaddingEl = document.getElementById('buttonPadding');
+    const buttonPaddingValueEl = document.getElementById('buttonPaddingValue');
+    const buttonRadiusEl = document.getElementById('buttonRadius');
+    const buttonRadiusValueEl = document.getElementById('buttonRadiusValue');
+    
+    // 按钮颜色元素
+    const startBtnBgColorEl = document.getElementById('startBtnBgColor');
+    const startBtnBgColorHexEl = document.getElementById('startBtnBgColorHex');
+    const startBtnTextColorEl = document.getElementById('startBtnTextColor');
+    const startBtnTextColorHexEl = document.getElementById('startBtnTextColorHex');
+    const stopBtnBgColorEl = document.getElementById('stopBtnBgColor');
+    const stopBtnBgColorHexEl = document.getElementById('stopBtnBgColorHex');
+    const stopBtnTextColorEl = document.getElementById('stopBtnTextColor');
+    const stopBtnTextColorHexEl = document.getElementById('stopBtnTextColorHex');
+    
+    const positionAlignBtns = document.querySelectorAll('.position-align-btn');
+    
+    const editStartBtnTextEl = document.getElementById('editStartBtnText');
+    const editStopBtnTextEl = document.getElementById('editStopBtnText');
+    const editFooterTextEl = document.getElementById('editFooterText');
+    const saveTextSettingsBtn = document.getElementById('saveTextSettings');
+    const savePositionSettingsBtn = document.getElementById('savePositionSettings');
+    
+    // 其他元素
+    const newNameInput = document.getElementById('newName');
+    const addNameBtn = document.getElementById('addName');
+    const nameListEl = document.getElementById('nameList');
+    const nameCountEl = document.getElementById('nameCount');
+    const resultAreaEl = document.getElementById('resultArea');
+    const historyListEl = document.getElementById('historyList');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const bgButtons = document.querySelectorAll('[data-bg]');
+    const bgUpload = document.getElementById('bgUpload');
+    const removeCustomBg = document.getElementById('removeCustomBg');
+    const bodyEl = document.body;
+    
+    // 初始化
+    function init() {
+      // 加载保存的文字内容
+      const savedTextContent = localStorage.getItem('randomCallerTextContent');
+      if (savedTextContent) {
+        textContent = JSON.parse(savedTextContent);
+        // 兼容旧版本数据
+        if (!textContent.resultTextColor) textContent.resultTextColor = defaultTextContent.resultTextColor;
+        if (!textContent.resultTextSize) textContent.resultTextSize = defaultTextContent.resultTextSize;
+        if (!textContent.subTitle) textContent.subTitle = defaultTextContent.subTitle;
+        if (!textContent.subTitleColor) textContent.subTitleColor = defaultTextContent.subTitleColor;
+        if (!textContent.subTitleSize) textContent.subTitleSize = defaultTextContent.subTitleSize;
+        if (!textContent.subTitleFont) textContent.subTitleFont = defaultTextContent.subTitleFont;
+        if (!textContent.mainTitleFont) textContent.mainTitleFont = defaultTextContent.mainTitleFont;
+        updateTextContent();
+      }
+      
+      // 加载保存的位置设置
+      const savedPositionSettings = localStorage.getItem('randomCallerPositionSettings');
+      if (savedPositionSettings) {
+        positionSettings = JSON.parse(savedPositionSettings);
+        // 添加副标题位置默认值（如果不存在）
+        if (positionSettings.subTitleMarginTop === undefined) positionSettings.subTitleMarginTop = defaultPositionSettings.subTitleMarginTop;
+        if (positionSettings.subTitleMarginBottom === undefined) positionSettings.subTitleMarginBottom = defaultPositionSettings.subTitleMarginBottom;
+        if (positionSettings.subTitleAlign === undefined) positionSettings.subTitleAlign = defaultPositionSettings.subTitleAlign;
+        if (positionSettings.subTitleHorizontalOffset === undefined) positionSettings.subTitleHorizontalOffset = defaultPositionSettings.subTitleHorizontalOffset;
+        
+        // 添加按钮样式默认值（如果不存在）
+        if (positionSettings.buttonHeight === undefined) positionSettings.buttonHeight = defaultPositionSettings.buttonHeight;
+        if (positionSettings.buttonPadding === undefined) positionSettings.buttonPadding = defaultPositionSettings.buttonPadding;
+        if (positionSettings.buttonRadius === undefined) positionSettings.buttonRadius = defaultPositionSettings.buttonRadius;
+        if (positionSettings.startBtnBgColor === undefined) positionSettings.startBtnBgColor = defaultPositionSettings.startBtnBgColor;
+        if (positionSettings.startBtnTextColor === undefined) positionSettings.startBtnTextColor = defaultPositionSettings.startBtnTextColor;
+        if (positionSettings.stopBtnBgColor === undefined) positionSettings.stopBtnBgColor = defaultPositionSettings.stopBtnBgColor;
+        if (positionSettings.stopBtnTextColor === undefined) positionSettings.stopBtnTextColor = defaultPositionSettings.stopBtnTextColor;
+        
+        // 确保随机文字位置为30rem
+        positionSettings.randomTextMarginTop = 30;
+      }
+      
+      updatePositionSettings();
+      
+      // 填充编辑框
+      fillTextEditFields();
+      fillPositionEditFields();
+      
+      // 加载保存的背景设置
+      const savedBgType = localStorage.getItem('randomCallerBgType');
+      const savedBgValue = localStorage.getItem('randomCallerBgValue');
+      
+      if (savedBgType && savedBgValue) {
+        currentBgType = savedBgType;
+        currentBgValue = savedBgValue;
+        setBackground(currentBgType, currentBgValue);
+      } else {
+        setBackground('pattern', DEFAULT_BG);
+      }
+      
+      // 尝试从本地存储加载数据
+      const savedNames = localStorage.getItem('randomCallerNames');
+      const savedHistory = localStorage.getItem('randomCallerHistory');
+      
+      if (savedNames) {
+        nameList = JSON.parse(savedNames);
+        renderNameList();
+        updateControls();
+      }
+      
+      if (savedHistory) {
+        historyList = JSON.parse(savedHistory);
+        renderHistory();
+      }
+      
+      // 事件监听
+      addNameBtn.addEventListener('click', addName);
+      newNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addName();
+      });
+      
+      startBtn.addEventListener('click', startRolling);
+      stopBtn.addEventListener('click', stopRolling);
+      
+      // 修复清空历史记录功能
+      clearHistoryBtn.addEventListener('click', clearHistory);
+      
+      // 页面切换事件 - 确保设置按钮点击有效
+      goToSettingsBtn.addEventListener('click', () => {
+        mainPage.classList.remove('active');
+        settingsPage.classList.add('active');
+      });
+      
+      goToMainBtn.addEventListener('click', () => {
+        settingsPage.classList.remove('active');
+        mainPage.classList.add('active');
+      });
+      
+      // 保存文字设置
+      saveTextSettingsBtn.addEventListener('click', saveTextSettings);
+      
+      // 保存位置设置
+      savePositionSettingsBtn.addEventListener('click', savePositionSettings);
+      
+      // 主标题颜色输入同步
+      mainTitleColorEl.addEventListener('input', () => {
+        mainTitleColorHexEl.value = mainTitleColorEl.value;
+      });
+      
+      mainTitleColorHexEl.addEventListener('input', () => {
+        if (/^#[0-9A-F]{6}$/i.test(mainTitleColorHexEl.value)) {
+          mainTitleColorEl.value = mainTitleColorHexEl.value;
+        }
+      });
+      
+      // 主标题字号调节
+      mainTitleSizeEl.addEventListener('input', () => {
+        mainTitleSizeValueEl.textContent = `${mainTitleSizeEl.value}rem`;
+      });
+      
+      // 副标题颜色输入同步
+      subTitleColorEl.addEventListener('input', () => {
+        subTitleColorHexEl.value = subTitleColorEl.value;
+      });
+      
+      subTitleColorHexEl.addEventListener('input', () => {
+        if (/^#[0-9A-F]{6}$/i.test(subTitleColorHexEl.value)) {
+          subTitleColorEl.value = subTitleColorHexEl.value;
+        }
+      });
+      
+      // 副标题字号调节
+      subTitleSizeEl.addEventListener('input', () => {
+        subTitleSizeValueEl.textContent = `${subTitleSizeEl.value}rem`;
+      });
+      
+      // 副标题水平偏移调节
+      subTitleHorizontalOffsetEl.addEventListener('input', () => {
+        subTitleHorizontalOffsetValueEl.textContent = `${subTitleHorizontalOffsetEl.value}rem`;
+      });
+      
+      // 随机结果文字颜色输入同步
+      resultTextColorEl.addEventListener('input', () => {
+        resultTextColorHexEl.value = resultTextColorEl.value;
+      });
+      
+      resultTextColorHexEl.addEventListener('input', () => {
+        if (/^#[0-9A-F]{6}$/i.test(resultTextColorHexEl.value)) {
+          resultTextColorEl.value = resultTextColorHexEl.value;
+        }
+      });
+      
+      // 随机结果文字字号调节
+      resultTextSizeEl.addEventListener('input', () => {
+        resultTextSizeValueEl.textContent = `${resultTextSizeEl.value}rem`;
+      });
+      
+      // 位置调整滑块事件
+      mainTitleMarginTopEl.addEventListener('input', () => {
+        mainTitleMarginTopValueEl.textContent = `${mainTitleMarginTopEl.value}rem`;
+      });
+      
+      mainTitleMarginBottomEl.addEventListener('input', () => {
+        mainTitleMarginBottomValueEl.textContent = `${mainTitleMarginBottomEl.value}rem`;
+      });
+      
+      // 副标题位置滑块事件
+      subTitleMarginTopEl.addEventListener('input', () => {
+        subTitleMarginTopValueEl.textContent = `${subTitleMarginTopEl.value}rem`;
+      });
+      
+      subTitleMarginBottomEl.addEventListener('input', () => {
+        subTitleMarginBottomValueEl.textContent = `${subTitleMarginBottomEl.value}rem`;
+      });
+      
+      randomTextMarginTopEl.addEventListener('input', () => {
+        randomTextMarginTopValueEl.textContent = `${randomTextMarginTopEl.value}rem`;
+      });
+      
+      randomTextMarginBottomEl.addEventListener('input', () => {
+        randomTextMarginBottomValueEl.textContent = `${randomTextMarginBottomEl.value}rem`;
+      });
+      
+      // 按钮位置滑块事件
+      buttonsMarginTopEl.addEventListener('input', () => {
+        buttonsMarginTopValueEl.textContent = `${buttonsMarginTopEl.value}rem`;
+      });
+      
+      buttonsMarginBottomEl.addEventListener('input', () => {
+        buttonsMarginBottomValueEl.textContent = `${buttonsMarginBottomEl.value}rem`;
+      });
+      
+      // 按钮大小滑块事件
+      buttonHeightEl.addEventListener('input', () => {
+        buttonHeightValueEl.textContent = `${buttonHeightEl.value}rem`;
+      });
+      
+      buttonPaddingEl.addEventListener('input', () => {
+        buttonPaddingValueEl.textContent = `${buttonPaddingEl.value}rem`;
+      });
+      
+      buttonRadiusEl.addEventListener('input', () => {
+        buttonRadiusValueEl.textContent = `${buttonRadiusEl.value}rem`;
+      });
+      
+      // 按钮颜色输入同步
+      startBtnBgColorEl.addEventListener('input', () => {
+        startBtnBgColorHexEl.value = startBtnBgColorEl.value;
+      });
+      
+      startBtnBgColorHexEl.addEventListener('input', () => {
+        if (/^#[0-9A-F]{6}$/i.test(startBtnBgColorHexEl.value)) {
+          startBtnBgColorEl.value = startBtnBgColorHexEl.value;
+        }
+      });
+      
+      startBtnTextColorEl.addEventListener('input', () => {
+        startBtnTextColorHexEl.value = startBtnTextColorEl.value;
+      });
+      
+      startBtnTextColorHexEl.addEventListener('input', () => {
+        if (/^#[0-9A-F]{6}$/i.test(startBtnTextColorHexEl.value)) {
+          startBtnTextColorEl.value = startBtnTextColorHexEl.value;
+        }
+      });
+      
+      stopBtnBgColorEl.addEventListener('input', () => {
+        stopBtnBgColorHexEl.value = stopBtnBgColorEl.value;
+      });
+      
+      stopBtnBgColorHexEl.addEventListener('input', () => {
+        if (/^#[0-9A-F]{6}$/i.test(stopBtnBgColorHexEl.value)) {
+          stopBtnBgColorEl.value = stopBtnBgColorHexEl.value;
+        }
+      });
+      
+      stopBtnTextColorEl.addEventListener('input', () => {
+        stopBtnTextColorHexEl.value = stopBtnTextColorEl.value;
+      });
+      
+      stopBtnTextColorHexEl.addEventListener('input', () => {
+        if (/^#[0-9A-F]{6}$/i.test(stopBtnTextColorHexEl.value)) {
+          stopBtnTextColorEl.value = stopBtnTextColorHexEl.value;
+        }
+      });
+      
+      // 对齐方式按钮事件
+      positionAlignBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const target = this.getAttribute('data-target');
+          const align = this.getAttribute('data-align');
+          
+          // 清除同组按钮的选中状态
+          positionAlignBtns.forEach(b => {
+            if (b.getAttribute('data-target') === target) {
+              b.classList.remove('bg-primary/10', 'border-primary');
+              b.classList.add('border-gray-300');
+            }
+          });
+          
+          // 设置当前按钮为选中状态
+          this.classList.remove('border-gray-300');
+          this.classList.add('bg-primary/10', 'border-primary');
+          
+          // 更新相应的位置设置
+          if (target === 'mainTitleContainer') {
+            positionSettings.mainTitleAlign = align;
+          } else if (target === 'subTitle') {
+            positionSettings.subTitleAlign = align;
+          } else if (target === 'randomTextContainer') {
+            positionSettings.randomTextAlign = align;
+          } else if (target === 'buttonsContainer') {
+            positionSettings.buttonsAlign = align;
+          }
+          
+          // 实时更新显示
+          applyPositionSettings();
+        });
+      });
+      
+      // 背景切换事件
+      bgButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const bgClass = btn.getAttribute('data-bg');
+          setBackground('pattern', bgClass);
+          currentBgType = 'pattern';
+          currentBgValue = bgClass;
+          saveBackgroundSettings();
+          removeCustomBg.classList.add('hidden');
+        });
+      });
+      
+      // 自定义背景上传
+      bgUpload.addEventListener('change', handleBgUpload);
+      removeCustomBg.addEventListener('click', removeCustomBackground);
+    }
+    
+    // 更新页面文字内容
+    function updateTextContent() {
+      // 主标题
+      if (textContent.mainTitle.trim() === '') {
+        mainTitleEl.classList.add('hidden');
+      } else {
+        mainTitleEl.classList.remove('hidden');
+        mainTitleEl.textContent = textContent.mainTitle;
+        mainTitleEl.style.color = textContent.mainTitleColor;
+        mainTitleEl.style.fontSize = `${textContent.mainTitleSize}rem`;
+        
+        ['font-sans', 'font-serif', 'font-mono', 'font-cursive'].forEach(font => {
+          mainTitleEl.classList.remove(font);
+        });
+        mainTitleEl.classList.add(textContent.mainTitleFont);
+      }
+      
+      // 副标题
+      if (textContent.subTitle.trim() === '') {
+        subTitleEl.classList.add('hidden');
+      } else {
+        subTitleEl.classList.remove('hidden');
+        subTitleEl.textContent = textContent.subTitle;
+        subTitleEl.style.color = textContent.subTitleColor;
+        subTitleEl.style.fontSize = `${textContent.subTitleSize}rem`;
+        
+        ['font-sans', 'font-serif', 'font-mono', 'font-cursive'].forEach(font => {
+          subTitleEl.classList.remove(font);
+        });
+        subTitleEl.classList.add(textContent.subTitleFont);
+      }
+      
+      // 默认结果文字
+      if (textContent.defaultResultText.trim() === '') {
+        defaultResultTextEl.classList.add('hidden');
+      } else {
+        defaultResultTextEl.classList.remove('hidden');
+        defaultResultTextEl.textContent = textContent.defaultResultText;
+      }
+      
+      // 随机结果文字样式设置
+      selectedNameEl.style.color = textContent.resultTextColor;
+      selectedNameEl.style.fontSize = `clamp(${textContent.resultTextSize * 0.5}rem, ${textContent.resultTextSize * 1.5}vw, ${textContent.resultTextSize}rem)`;
+      
+      // 按钮文字
+      startBtnEl.textContent = textContent.startBtnText;
+      stopBtnEl.textContent = textContent.stopBtnText;
+      
+      // 页脚文字
+      if (textContent.footerText.trim() === '') {
+        footerContainer.classList.add('hidden');
+      } else {
+        footerContainer.classList.remove('hidden');
+        footerTextEl.textContent = textContent.footerText;
+      }
+      
+      // 更新设置页面的控件
+      mainTitleColorEl.value = textContent.mainTitleColor;
+      mainTitleColorHexEl.value = textContent.mainTitleColor;
+      mainTitleSizeEl.value = textContent.mainTitleSize;
+      mainTitleSizeValueEl.textContent = `${textContent.mainTitleSize}rem`;
+      mainTitleFontEl.value = textContent.mainTitleFont;
+      
+      subTitleColorEl.value = textContent.subTitleColor;
+      subTitleColorHexEl.value = textContent.subTitleColor;
+      subTitleSizeEl.value = textContent.subTitleSize;
+      subTitleSizeValueEl.textContent = `${textContent.subTitleSize}rem`;
+      subTitleFontEl.value = textContent.subTitleFont;
+      
+      resultTextColorEl.value = textContent.resultTextColor;
+      resultTextColorHexEl.value = textContent.resultTextColor;
+      resultTextSizeEl.value = textContent.resultTextSize;
+      resultTextSizeValueEl.textContent = `${textContent.resultTextSize}rem`;
+    }
+    
+    // 更新位置设置
+    function updatePositionSettings() {
+      // 更新输入控件
+      mainTitleMarginTopEl.value = positionSettings.mainTitleMarginTop;
+      mainTitleMarginTopValueEl.textContent = `${positionSettings.mainTitleMarginTop}rem`;
+      mainTitleMarginBottomEl.value = positionSettings.mainTitleMarginBottom;
+      mainTitleMarginBottomValueEl.textContent = `${positionSettings.mainTitleMarginBottom}rem`;
+      
+      // 副标题位置控件
+      subTitleMarginTopEl.value = positionSettings.subTitleMarginTop;
+      subTitleMarginTopValueEl.textContent = `${positionSettings.subTitleMarginTop}rem`;
+      subTitleMarginBottomEl.value = positionSettings.subTitleMarginBottom;
+      subTitleMarginBottomValueEl.textContent = `${positionSettings.subTitleMarginBottom}rem`;
+      subTitleHorizontalOffsetEl.value = positionSettings.subTitleHorizontalOffset;
+      subTitleHorizontalOffsetValueEl.textContent = `${positionSettings.subTitleHorizontalOffset}rem`;
+      
+      // 随机文字位置设置为30rem
+      randomTextMarginTopEl.value = positionSettings.randomTextMarginTop;
+      randomTextMarginTopValueEl.textContent = `${positionSettings.randomTextMarginTop}rem`;
+      randomTextMarginBottomEl.value = positionSettings.randomTextMarginBottom;
+      randomTextMarginBottomValueEl.textContent = `${positionSettings.randomTextMarginBottom}rem`;
+      
+      // 按钮位置与样式控件
+      buttonsMarginTopEl.value = positionSettings.buttonsMarginTop;
+      buttonsMarginTopValueEl.textContent = `${positionSettings.buttonsMarginTop}rem`;
+      buttonsMarginBottomEl.value = positionSettings.buttonsMarginBottom;
+      buttonsMarginBottomValueEl.textContent = `${positionSettings.buttonsMarginBottom}rem`;
+      
+      buttonHeightEl.value = positionSettings.buttonHeight;
+      buttonHeightValueEl.textContent = `${positionSettings.buttonHeight}rem`;
+      buttonPaddingEl.value = positionSettings.buttonPadding;
+      buttonPaddingValueEl.textContent = `${positionSettings.buttonPadding}rem`;
+      buttonRadiusEl.value = positionSettings.buttonRadius;
+      buttonRadiusValueEl.textContent = `${positionSettings.buttonRadius}rem`;
+      
+      // 按钮颜色控件
+      startBtnBgColorEl.value = positionSettings.startBtnBgColor;
+      startBtnBgColorHexEl.value = positionSettings.startBtnBgColor;
+      startBtnTextColorEl.value = positionSettings.startBtnTextColor;
+      startBtnTextColorHexEl.value = positionSettings.startBtnTextColor;
+      stopBtnBgColorEl.value = positionSettings.stopBtnBgColor;
+      stopBtnBgColorHexEl.value = positionSettings.stopBtnBgColor;
+      stopBtnTextColorEl.value = positionSettings.stopBtnTextColor;
+      stopBtnTextColorHexEl.value = positionSettings.stopBtnTextColor;
+      
+      // 更新对齐按钮状态
+      positionAlignBtns.forEach(btn => {
+        const target = btn.getAttribute('data-target');
+        const align = btn.getAttribute('data-align');
+        
+        btn.classList.remove('bg-primary/10', 'border-primary');
+        btn.classList.add('border-gray-300');
+        
+        if (target === 'mainTitleContainer' && align === positionSettings.mainTitleAlign) {
+          btn.classList.remove('border-gray-300');
+          btn.classList.add('bg-primary/10', 'border-primary');
+        } else if (target === 'subTitle' && align === positionSettings.subTitleAlign) {
+          btn.classList.remove('border-gray-300');
+          btn.classList.add('bg-primary/10', 'border-primary');
+        } else if (target === 'randomTextContainer' && align === positionSettings.randomTextAlign) {
+          btn.classList.remove('border-gray-300');
+          btn.classList.add('bg-primary/10', 'border-primary');
+        } else if (target === 'buttonsContainer' && align === positionSettings.buttonsAlign) {
+          btn.classList.remove('border-gray-300');
+          btn.classList.add('bg-primary/10', 'border-primary');
+        }
+      });
+      
+      // 应用位置设置到界面
+      applyPositionSettings();
+    }
+    
+    // 应用位置设置到界面元素
+    function applyPositionSettings() {
+      // 移除所有对齐类
+      mainTitleContainer.classList.remove('text-left', 'text-center', 'text-right');
+      subTitleEl.classList.remove('text-left', 'text-center', 'text-right');
+      randomTextContainer.classList.remove('text-left', 'text-center', 'text-right');
+      buttonsContainer.classList.remove('justify-start', 'justify-center', 'justify-end');
+      
+      // 应用主标题位置
+      mainTitleContainer.style.marginTop = `${positionSettings.mainTitleMarginTop}rem`;
+      mainTitleContainer.style.marginBottom = `${positionSettings.mainTitleMarginBottom}rem`;
+      mainTitleContainer.classList.add(positionSettings.mainTitleAlign);
+      
+      // 应用副标题位置
+      subTitleEl.style.marginTop = `${positionSettings.subTitleMarginTop}rem`;
+      subTitleEl.style.marginBottom = `${positionSettings.subTitleMarginBottom}rem`;
+      subTitleEl.style.transform = `translateX(${positionSettings.subTitleHorizontalOffset}rem)`;
+      subTitleEl.classList.add(positionSettings.subTitleAlign);
+      
+      // 应用随机文字位置（已设置为30rem）
+      randomTextContainer.style.marginTop = `${positionSettings.randomTextMarginTop}rem`;
+      randomTextContainer.style.marginBottom = `${positionSettings.randomTextMarginBottom}rem`;
+      randomTextContainer.classList.add(positionSettings.randomTextAlign);
+      
+      // 应用按钮位置
+      buttonsContainer.style.marginTop = `${positionSettings.buttonsMarginTop}rem`;
+      buttonsContainer.style.marginBottom = `${positionSettings.buttonsMarginBottom}rem`;
+      buttonsContainer.classList.add(positionSettings.buttonsAlign);
+      
+      // 应用按钮样式
+      const padding = `${positionSettings.buttonPadding}rem`;
+      const height = `${positionSettings.buttonHeight}rem`;
+      const radius = `${positionSettings.buttonRadius}rem`;
+      
+      startBtn.style.padding = `0 ${padding}`;
+      startBtn.style.height = height;
+      startBtn.style.borderRadius = radius;
+      startBtn.style.backgroundColor = positionSettings.startBtnBgColor;
+      startBtn.style.color = positionSettings.startBtnTextColor;
+      
+      stopBtn.style.padding = `0 ${padding}`;
+      stopBtn.style.height = height;
+      stopBtn.style.borderRadius = radius;
+      stopBtn.style.backgroundColor = positionSettings.stopBtnBgColor;
+      stopBtn.style.color = positionSettings.stopBtnTextColor;
+    }
+    
+    // 填充文字编辑框
+    function fillTextEditFields() {
+      editMainTitleEl.value = textContent.mainTitle;
+      editSubTitleEl.value = textContent.subTitle;
+      editDefaultResultTextEl.value = textContent.defaultResultText;
+      editStartBtnTextEl.value = textContent.startBtnText;
+      editStopBtnTextEl.value = textContent.stopBtnText;
+      editFooterTextEl.value = textContent.footerText;
+      
+      mainTitleColorEl.value = textContent.mainTitleColor;
+      mainTitleColorHexEl.value = textContent.mainTitleColor;
+      mainTitleSizeEl.value = textContent.mainTitleSize;
+      mainTitleSizeValueEl.textContent = `${textContent.mainTitleSize}rem`;
+      mainTitleFontEl.value = textContent.mainTitleFont;
+      
+      subTitleColorEl.value = textContent.subTitleColor;
+      subTitleColorHexEl.value = textContent.subTitleColor;
+      subTitleSizeEl.value = textContent.subTitleSize;
+      subTitleSizeValueEl.textContent = `${textContent.subTitleSize}rem`;
+      subTitleFontEl.value = textContent.subTitleFont;
+      
+      resultTextColorEl.value = textContent.resultTextColor;
+      resultTextColorHexEl.value = textContent.resultTextColor;
+      resultTextSizeEl.value = textContent.resultTextSize;
+      resultTextSizeValueEl.textContent = `${textContent.resultTextSize}rem`;
+    }
+    
+    // 填充位置编辑框
+    function fillPositionEditFields() {
+      mainTitleMarginTopEl.value = positionSettings.mainTitleMarginTop;
+      mainTitleMarginTopValueEl.textContent = `${positionSettings.mainTitleMarginTop}rem`;
+      mainTitleMarginBottomEl.value = positionSettings.mainTitleMarginBottom;
+      mainTitleMarginBottomValueEl.textContent = `${positionSettings.mainTitleMarginBottom}rem`;
+      
+      subTitleMarginTopEl.value = positionSettings.subTitleMarginTop;
+      subTitleMarginTopValueEl.textContent = `${positionSettings.subTitleMarginTop}rem`;
+      subTitleMarginBottomEl.value = positionSettings.subTitleMarginBottom;
+      subTitleMarginBottomValueEl.textContent = `${positionSettings.subTitleMarginBottom}rem`;
+      subTitleHorizontalOffsetEl.value = positionSettings.subTitleHorizontalOffset;
+      subTitleHorizontalOffsetValueEl.textContent = `${positionSettings.subTitleHorizontalOffset}rem`;
+      
+      // 随机文字位置设置为30rem
+      randomTextMarginTopEl.value = positionSettings.randomTextMarginTop;
+      randomTextMarginTopValueEl.textContent = `${positionSettings.randomTextMarginTop}rem`;
+      randomTextMarginBottomEl.value = positionSettings.randomTextMarginBottom;
+      randomTextMarginBottomValueEl.textContent = `${positionSettings.randomTextMarginBottom}rem`;
+      
+      buttonsMarginTopEl.value = positionSettings.buttonsMarginTop;
+      buttonsMarginTopValueEl.textContent = `${positionSettings.buttonsMarginTop}rem`;
+      buttonsMarginBottomEl.value = positionSettings.buttonsMarginBottom;
+      buttonsMarginBottomValueEl.textContent = `${positionSettings.buttonsMarginBottom}rem`;
+      
+      buttonHeightEl.value = positionSettings.buttonHeight;
+      buttonHeightValueEl.textContent = `${positionSettings.buttonHeight}rem`;
+      buttonPaddingEl.value = positionSettings.buttonPadding;
+      buttonPaddingValueEl.textContent = `${positionSettings.buttonPadding}rem`;
+      buttonRadiusEl.value = positionSettings.buttonRadius;
+      buttonRadiusValueEl.textContent = `${positionSettings.buttonRadius}rem`;
+      
+      startBtnBgColorEl.value = positionSettings.startBtnBgColor;
+      startBtnBgColorHexEl.value = positionSettings.startBtnBgColor;
+      startBtnTextColorEl.value = positionSettings.startBtnTextColor;
+      startBtnTextColorHexEl.value = positionSettings.startBtnTextColor;
+      stopBtnBgColorEl.value = positionSettings.stopBtnBgColor;
+      stopBtnBgColorHexEl.value = positionSettings.stopBtnBgColor;
+      stopBtnTextColorEl.value = positionSettings.stopBtnTextColor;
+      stopBtnTextColorHexEl.value = positionSettings.stopBtnTextColor;
+    }
+    
+    // 保存文字设置
+    function saveTextSettings() {
+      textContent = {
+        ...textContent,
+        mainTitle: editMainTitleEl.value.trim(),
+        mainTitleColor: mainTitleColorEl.value,
+        mainTitleSize: parseFloat(mainTitleSizeEl.value),
+        mainTitleFont: mainTitleFontEl.value,
+        
+        subTitle: editSubTitleEl.value.trim(),
+        subTitleColor: subTitleColorEl.value,
+        subTitleSize: parseFloat(subTitleSizeEl.value),
+        subTitleFont: subTitleFontEl.value,
+        
+        defaultResultText: editDefaultResultTextEl.value.trim(),
+        resultTextColor: resultTextColorEl.value,
+        resultTextSize: parseFloat(resultTextSizeEl.value),
+        startBtnText: editStartBtnTextEl.value.trim(),
+        stopBtnText: editStopBtnTextEl.value.trim(),
+        footerText: editFooterTextEl.value.trim()
+      };
+      
+      updateTextContent();
+      localStorage.setItem('randomCallerTextContent', JSON.stringify(textContent));
+      
+      showToast('文字设置已保存');
+    }
+    
+    // 保存位置设置
+    function savePositionSettings() {
+      positionSettings = {
+        ...positionSettings,
+        mainTitleMarginTop: parseFloat(mainTitleMarginTopEl.value),
+        mainTitleMarginBottom: parseFloat(mainTitleMarginBottomEl.value),
+        mainTitleAlign: positionSettings.mainTitleAlign,
+        
+        subTitleMarginTop: parseFloat(subTitleMarginTopEl.value),
+        subTitleMarginBottom: parseFloat(subTitleMarginBottomEl.value),
+        subTitleAlign: positionSettings.subTitleAlign,
+        subTitleHorizontalOffset: parseFloat(subTitleHorizontalOffsetEl.value),
+        
+        // 确保随机文字位置为30rem
+        randomTextMarginTop: 30,
+        randomTextMarginBottom: parseFloat(randomTextMarginBottomEl.value),
+        randomTextAlign: positionSettings.randomTextAlign,
+        
+        buttonsMarginTop: parseFloat(buttonsMarginTopEl.value),
+        buttonsMarginBottom: parseFloat(buttonsMarginBottomEl.value),
+        buttonsAlign: positionSettings.buttonsAlign,
+        
+        buttonHeight: parseFloat(buttonHeightEl.value),
+        buttonPadding: parseFloat(buttonPaddingEl.value),
+        buttonRadius: parseFloat(buttonRadiusEl.value),
+        
+        startBtnBgColor: startBtnBgColorEl.value,
+        startBtnTextColor: startBtnTextColorEl.value,
+        stopBtnBgColor: stopBtnBgColorEl.value,
+        stopBtnTextColor: stopBtnTextColorEl.value
+      };
+      
+      updatePositionSettings();
+      localStorage.setItem('randomCallerPositionSettings', JSON.stringify(positionSettings));
+      
+      showToast('位置与按钮设置已保存');
+    }
+    
+    // 处理背景图片上传
+    function handleBgUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (!file.type.startsWith('image/')) {
+        showToast('请上传图片文件');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const imageUrl = event.target.result;
+        setBackground('custom', imageUrl);
+        currentBgType = 'custom';
+        currentBgValue = imageUrl;
+        saveBackgroundSettings();
+        removeCustomBg.classList.remove('hidden');
+        bgUpload.value = '';
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    // 移除自定义背景
+    function removeCustomBackground() {
+      setBackground('pattern', DEFAULT_BG);
+      currentBgType = 'pattern';
+      currentBgValue = DEFAULT_BG;
+      saveBackgroundSettings();
+      removeCustomBg.classList.add('hidden');
+      bgUpload.value = '';
+    }
+    
+    // 设置背景
+    function setBackground(type, value) {
+      bodyEl.classList.remove(
+        'bg-pattern-1', 
+        'bg-pattern-2', 
+        'bg-pattern-3', 
+        'bg-pattern-4', 
+        'bg-pattern-5'
+      );
+      bodyEl.style.backgroundImage = '';
+      bodyEl.style.backgroundSize = '';
+      bodyEl.style.backgroundPosition = '';
+      bodyEl.style.backgroundRepeat = '';
+      
+      bgButtons.forEach(btn => {
+        btn.classList.remove('border-primary');
+      });
+      
+      if (type === 'pattern') {
+        bodyEl.classList.add(value);
+        bgButtons.forEach(btn => {
+          if (btn.getAttribute('data-bg') === value) {
+            btn.classList.add('border-primary');
+          }
+        });
+      } else if (type === 'custom') {
+        bodyEl.style.backgroundImage = `url("${value}")`;
+        bodyEl.style.backgroundSize = 'cover';
+        bodyEl.style.backgroundPosition = 'center';
+        bodyEl.style.backgroundRepeat = 'no-repeat';
+      }
+    }
+    
+    // 保存背景设置到本地存储
+    function saveBackgroundSettings() {
+      localStorage.setItem('randomCallerBgType', currentBgType);
+      localStorage.setItem('randomCallerBgValue', currentBgValue);
+    }
+    
+    // 添加名字
+    function addName() {
+      const name = newNameInput.value.trim();
+      if (name && !nameList.includes(name)) {
+        nameList.push(name);
+        newNameInput.value = '';
+        renderNameList();
+        updateControls();
+        saveNames();
+        
+        const newEl = nameListEl.lastElementChild;
+        if (newEl) {
+          newEl.classList.add('bg-primary/10');
+          setTimeout(() => {
+            newEl.classList.remove('bg-primary/10');
+          }, 500);
+        }
+      } else if (nameList.includes(name)) {
+        showToast('该名字已存在');
+      }
+      
+      newNameInput.focus();
+    }
+    
+    // 删除名字
+    function deleteName(index) {
+      nameList.splice(index, 1);
+      renderNameList();
+      updateControls();
+      saveNames();
+    }
+    
+    // 清空历史记录（已修复）
+    function clearHistory() {
+      if (confirm('确定要清空所有历史记录吗？')) {
+        historyList = [];
+        renderHistory();
+        saveHistory();
+        showToast('历史记录已清空');
+      }
+    }
+    
+    // 开始滚动
+    function startRolling() {
+      if (nameList.length === 0) return;
+      
+      isRolling = true;
+      startBtn.classList.add('hidden');
+      stopBtn.classList.remove('hidden');
+      
+      let lastIndex = -1;
+      rollInterval = setInterval(() => {
+        let randomIndex;
+        do {
+          randomIndex = Math.floor(Math.random() * nameList.length);
+        } while (randomIndex === lastIndex && nameList.length > 1);
+        
+        lastIndex = randomIndex;
+        showSelectedName(nameList[randomIndex]);
+      }, 80);
+    }
+    
+    // 停止滚动
+    function stopRolling() {
+      if (!isRolling) return;
+      
+      clearInterval(rollInterval);
+      isRolling = false;
+      stopBtn.classList.add('hidden');
+      startBtn.classList.remove('hidden');
+      
+      selectedNameEl.classList.add('animate-bounce-slow');
+      setTimeout(() => {
+        selectedNameEl.classList.remove('animate-bounce-slow');
+      }, 1000);
+      
+      const selectedName = selectedNameEl.textContent;
+      addToHistory(selectedName);
+    }
+    
+    // 显示选中的名字
+    function showSelectedName(name) {
+      defaultResultTextEl.classList.add('hidden');
+      selectedNameEl.classList.remove('hidden');
+      selectedNameEl.textContent = name;
+    }
+    
+    // 添加到历史记录
+    function addToHistory(name) {
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      historyList.unshift({
+        name,
+        time: timeStr
+      });
+      
+      if (historyList.length > 20) {
+        historyList.pop();
+      }
+      
+      renderHistory();
+      saveHistory();
+    }
+    
+    // 渲染名单列表
+    function renderNameList() {
+      if (nameList.length === 0) {
+        nameListEl.innerHTML = `
+          <div class="text-gray-400 text-center py-6 text-sm">
+            <i class="fa fa-info-circle mr-1"></i> 暂无名单，请添加
+          </div>
+        `;
+        nameCountEl.textContent = '0人';
+        return;
+      }
+      
+      nameListEl.innerHTML = '';
+      nameList.forEach((name, index) => {
+        const nameEl = document.createElement('div');
+        nameEl.className = 'flex justify-between items-center p-2 bg-gray-50/80 rounded-lg hover:bg-gray-100 transition-colors';
+        nameEl.innerHTML = `
+          <span class="flex items-center">
+            <span class="inline-block w-6 h-6 rounded-full bg-primary/20 text-primary text-xs flex items-center justify-center mr-2">${index + 1}</span>
+            ${name}
+          </span>
+          <button class="text-gray-400 hover:text-danger transition-colors" onclick="deleteName(${index})">
+            <i class="fa fa-times"></i>
+          </button>
+        `;
+        nameListEl.appendChild(nameEl);
+      });
+      
+      nameCountEl.textContent = `${nameList.length}人`;
+    }
+    
+    // 渲染历史记录
+    function renderHistory() {
+      if (historyList.length === 0) {
+        historyListEl.innerHTML = `
+          <div class="text-gray-400 text-center py-4 text-sm col-span-full">
+            暂无记录
+          </div>
+        `;
+        return;
+      }
+      
+      historyListEl.innerHTML = '';
+      historyList.forEach((item, index) => {
+        const historyEl = document.createElement('div');
+        historyEl.className = `bg-gray-50/80 rounded-lg p-2 text-center ${index === 0 ? 'ring-2 ring-accent' : ''}`;
+        historyEl.innerHTML = `
+          <p class="font-medium ${index === 0 ? 'text-accent' : ''}">${item.name}</p>
+          <p class="text-xs text-gray-500">${item.time}</p>
+        `;
+        historyListEl.appendChild(historyEl);
+      });
+    }
+    
+    // 更新控制按钮状态
+    function updateControls() {
+      const hasNames = nameList.length > 0;
+      startBtn.disabled = !hasNames;
+    }
+    
+    // 保存名单到本地存储
+    function saveNames() {
+      localStorage.setItem('randomCallerNames', JSON.stringify(nameList));
+    }
+    
+    // 保存历史记录到本地存储
+    function saveHistory() {
+      localStorage.setItem('randomCallerHistory', JSON.stringify(historyList));
+    }
+    
+    // 显示提示信息
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-dark text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-all duration-300 opacity-0';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.replace('opacity-0', 'opacity-100');
+      }, 10);
+      
+      setTimeout(() => {
+        toast.classList.replace('opacity-100', 'opacity-0');
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 3000);
+    }
+    
+    window.deleteName = deleteName;
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
